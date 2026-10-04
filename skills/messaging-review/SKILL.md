@@ -14,7 +14,7 @@ Today is ${today}. This skill holds product copy to a playbook (`skills/messagin
 
 ## Rules of the job
 
-- **You recommend; you never edit.** This skill is `mode: read-only`. You have no Write or Edit tool. Every file you produce is written with a shell redirection (`>`/`>>`) into `memory/skills/messaging-review/`, the one place the workflow keeps.
+- **You recommend; you never edit.** This skill is `mode: read-only`. You have no Write or Edit tool, and shell redirection into a file (`>`, `>>`, `tee`) is refused. Write every file with `node -e` and `fs.writeFileSync`, as the commands below do. Scratch output goes to `/tmp`; everything that should last goes into `memory/skills/messaging-review/`, the one place the workflow keeps.
 - **Ground every finding in the extractor's output.** Quote the page's actual words. Never invent copy the page does not have.
 - **Quote reference sites sparingly:** at most one line under 15 words per site, with the site named. Learn the pattern, not the text.
 - **Rewrites follow the playbook,** and the playbook wins over taste. If a rule seems wrong for a page, say so in the report instead of quietly breaking it.
@@ -26,7 +26,7 @@ Today is ${today}. This skill holds product copy to a playbook (`skills/messagin
 2. **Extract each page.** For every URL in the `Operator var`:
 
    ```bash
-   node skills/messaging-review/copy-extract.mjs --url <page> > /tmp/copy-<n>.json
+   node -e 'const fs=require("fs");const r=require("child_process").spawnSync("node",["skills/messaging-review/copy-extract.mjs","--url",process.argv[1]],{encoding:"utf8"});fs.writeFileSync(process.argv[2],r.stdout);process.stderr.write(r.stderr);process.exit(r.status??1)' <page> /tmp/copy-<n>.json
    ```
 
    A page that cannot be fetched returns `"ok": false` and exits 1. Record it and continue. The JSON has the hero, headings, paragraphs, buttons and `checks`: `fragment_chains`, `jargon`, `generic_links`, `long_sequences`, `sections`, `hero_too_long` and `no_hero`. Those checks are mechanical hints, not verdicts. A single deliberate two-beat closer is allowed, and a jargon hit inside a code sample is fine.
@@ -51,9 +51,9 @@ Today is ${today}. This skill holds product copy to a playbook (`skills/messagin
    - one short example (under 15 words);
    - which playbook rule it supports, extends or challenges.
 
-   If the same pattern has now been seen on two or more different sites, mark it `confirmed`. When a reference site links to a peer worth studying, add that URL to the end of `references.txt`.
+   If the same pattern has now been seen on two or more different sites, mark it `confirmed`. When a reference site links to a peer worth studying, add that URL to the end of `references.txt`, but only if it is a public `https://` URL. Never add `http://` links, `localhost`, bare IP addresses, private or internal hostnames (such as `*.local` or `*.internal`), or cloud metadata hosts (such as `169.254.169.254`).
 
-6. **Write this run's state** before notifying, so the next diff has a baseline even if notification fails. Use one new file per run, named by UTC timestamp. Fold the extractor's JSON in by redirecting it, never retyping:
+6. **Write this run's state** before notifying, so the next diff has a baseline even if notification fails. Use one new file per run, named by UTC timestamp. Fold the extractor's JSON in by reading the files, never retyping:
 
    ```bash
    mkdir -p memory/skills/messaging-review
@@ -62,7 +62,15 @@ Today is ${today}. This skill holds product copy to a playbook (`skills/messagin
 
    Run each command as its own call; the sandbox denies chained commands.
 
-   Rewrite these in full, keeping history from the previous copy:
+   Rewrite these in full, keeping history from the previous copy. Write each one with a single `node -e` call that takes the new content on stdin, one call per file:
+
+   ```bash
+   node -e 'require("fs").writeFileSync(process.argv[1],require("fs").readFileSync(0,"utf8"))' memory/skills/messaging-review/REWRITES.md <<'FILE_EOF'
+   full new content of the file
+   FILE_EOF
+   ```
+
+   The files:
    - **`memory/skills/messaging-review/REWRITES.md`:** the standing list of open rewrites per page, worst first. Each entry gives the rule, the current words, the suggested words and its status (open, adopted or parked).
    - **`memory/skills/messaging-review/LEARNINGS.md`:** every lesson so far, newest first. Each entry gives the date, the site, the pattern, the example, the rule it touches, and `confirmed` when earned. Then a short "Playbook upgrades to consider" section listing confirmed lessons the playbook does not have yet.
    - **`memory/skills/messaging-review/references.txt`:** rotated.

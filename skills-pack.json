@@ -10,6 +10,7 @@
       "path": "skills/messaging-review",
       "category": "productivity",
       "capabilities": [
+        "read_only",
         "sends_notifications"
       ],
       "secrets_required": []
