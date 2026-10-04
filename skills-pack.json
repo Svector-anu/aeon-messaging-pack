@@ -1,0 +1,14 @@
+{
+  "name": "Messaging Pack",
+  "version": "1.0",
+  "author": "Svector-anu",
+  "license": "MIT",
+  "description": "Hold product copy to a plain-language messaging playbook, and let the playbook learn from the best sites each week.",
+  "skills": [
+    {
+      "slug": "messaging-review",
+      "path": "skills/messaging-review",
+      "category": "productivity"
+    }
+  ]
+}
