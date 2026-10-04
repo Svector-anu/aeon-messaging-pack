@@ -8,7 +8,11 @@
     {
       "slug": "messaging-review",
       "path": "skills/messaging-review",
-      "category": "productivity"
+      "category": "productivity",
+      "capabilities": [
+        "sends_notifications"
+      ],
+      "secrets_required": []
     }
   ]
 }
