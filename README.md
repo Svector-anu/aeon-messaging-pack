@@ -1,4 +1,4 @@
-# Messaging Pack for Aeon
+# messaging Pack for Aeon
 
 One skill, `messaging-review`, that keeps a product's copy plain and clear, and gets better at it every week.
 
